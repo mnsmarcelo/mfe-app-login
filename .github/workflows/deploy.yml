@@ -1,0 +1,28 @@
+name: CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 18
+      - run: npm install -g yarn
+      - run: yarn install
+      - run: yarn build-storybook
+      - run: yarn build-as-lib
+      - uses: keithweaver/aws-s3-github-action@v1.0.0
+        name: Deploying to Amazon S3
+        with:
+          command: cp
+          source: ./out/
+          destination: s3://mnsmarcelo-mfe-app-login-next/
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: us-east-2
+          flags: --recursive
